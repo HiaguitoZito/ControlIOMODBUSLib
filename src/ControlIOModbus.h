@@ -83,38 +83,46 @@ private:
 
 class ControlIOMODBUSSlave {
 public:
-
+	static bool** coils;
+	static int** inputStatus;
+	static unsigned int** holdingRegisters;
+	static int** inputRegisters;
+	static int coilAmount;
+	static int inputStatusAmount;
+	static int holdingRegistersAmount;
+	static int inputRegistersAmount;
 	/// <summary>
 	/// Creates a new Slave.
 	/// </summary>
 	/// <param name="slaveID">the slave id</param>
-	ControlIOMODBUSSlave(unsigned int slaveID) {
+	ControlIOMODBUSSlave(unsigned int slaveID, int coilAmount, int inputStatusAmount, int holdingRegistersAmount, int inputRegistersAmount) {
 		ControlIOMODBUSSlave::_SlaveID = slaveID;
+		this->coilAmount = coilAmount;
+		this->inputStatusAmount = inputStatusAmount;
+		this->holdingRegistersAmount = holdingRegistersAmount;
+		this->inputRegistersAmount = inputRegistersAmount;
+		delete[] coils;
+		delete[] inputStatus;
+		delete[] holdingRegisters;
+		delete[] inputRegisters;
+		// Creates the registers/coils
+		coils = new bool* [coilAmount];
+		for (int i = 0; i < coilAmount; i++) {
+			coils[i] = new bool{ false };
+		}
+		inputRegisters = new int* [inputRegistersAmount];
+		for (int i = 0; i < inputRegistersAmount; i++) {
+			inputRegisters[i] = new int{ 10 };
+		}
+		holdingRegisters = new unsigned int* [holdingRegistersAmount];
+		for (int i = 0; i < holdingRegistersAmount; i++) {
+			holdingRegisters[i] = new unsigned int{ 0 };
+		}
+		inputStatus = new int* [inputStatusAmount];
+		for (int i = 0; i < inputStatusAmount; i++) {
+			inputStatus[i] = new int{ 0 };
+		}
 	}
-
-	/// <summary>
-	/// Sets the coil to whatever pin you want.
-	/// </summary>
-	/// <param name="pinCoils">array of number representing the pin of the arduino you want to set as a coil</param>
-	void SetCoils(bool** pinCoils);
-
-	/// <summary>
-	/// Sets the input status to whatever pin you want.
-	/// </summary>
-	/// <param name="pinRegisters">array of number representing the pin of the arduino you want to set as a input status</param>
-	void SetInputStatus(int** pinRegisters);
-
-	/// <summary>
-	/// Sets the holding registers to whatever pin you want.
-	/// </summary>
-	/// <param name="pinRegisters">array of number representing the pin of the arduino you want to set as a register</param>
-	void SetHoldingRegisters(int** pinRegisters);
-
-	/// <summary>
-	/// Sets the input registers to whatever pin you want.
-	/// </summary>
-	/// <param name="pinRegisters">array of number representing the pin of the arduino you want to set as a register</param>
-	void SetInputRegisters(int** pinRegisters);
 	/// <summary>
 	/// Read the serial buffer to return another message in the serial if the message recieved is good.
 	/// </summary>
@@ -122,43 +130,6 @@ public:
 
 private:
 	static unsigned int _SlaveID;
-
-	static bool** coils;
-	static int** inputStatus;
-	static int** holdingRegisters;
-	static int** inputRegisters;
-
-	/// <summary>
-	/// Returns the coils.
-	/// </summary>
-	/// <param name="first">first coil</param>
-	/// <param name="amount">amount of coils to read</param>
-	/// <returns>the coils you asked for</returns>
-	static bool** ReturnCoils(int first, int amount);
-
-	/// <summary>
-	/// Returns the input status.
-	/// </summary>
-	/// <param name="first">first input status</param>
-	/// <param name="amount">amount of input status to read</param>
-	/// <returns>the input status you asked for</returns>
-	static int** ReturnInputStatus(int first, int amount);
-
-	/// <summary>
-	/// Returns the holding registers.
-	/// </summary>
-	/// <param name="first">first register</param>
-	/// <param name="amount">amount of registers to read</param>
-	/// <returns>the registers you asked for</returns>
-	static int** ReturnHoldingRegisters(int first, int amount);
-
-	/// <summary>
-	/// Returns the input registers.
-	/// </summary>
-	/// <param name="first">first register</param>
-	/// <param name="amount">amount of registers to read</param>
-	/// <returns>the registers you asked for</returns>
-	static int** ReturnInputRegisters(int first, int amount);
 
 	/// <summary>
 	/// Writes a coil.
@@ -172,7 +143,7 @@ private:
 	/// </summary>
 	/// <param name="reg">the register you want to write</param>
 	/// <param name="value">the value you want that register to be</param>
-	static void WriteRegister(int reg, unsigned int value);
+	static void WriteRegister(int reg, int value);
 
 
 	/// <summary>
@@ -181,5 +152,5 @@ private:
 	/// <param name="piece">1 byte of the message</param>
 	/// <param name="value">the value buffer, the first value needs to be 0xFFFF</param>
 	/// <returns>the CRC of the piece</returns>
-	static int DoCRC(int piece, unsigned int value);
+	static int DoCRC(short piece, unsigned int value);
 };
