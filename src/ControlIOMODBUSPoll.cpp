@@ -21,7 +21,7 @@ bool ControlIOMODBUSPoll::WriteSingleCoil(int slaveID, int coil, bool value) {
 	Serial.write(CRC);
 	delay(2);
 	Serial.write((unsigned int)CRC / 256);
-
+	
 	// Checks if the message reached the slave.
 	for (int i = 0; i < 14; i++) {
 		if (Serial.available() > 7) break;
@@ -37,14 +37,11 @@ bool ControlIOMODBUSPoll::WriteSingleCoil(int slaveID, int coil, bool value) {
 			return false;
 		}
 	}
-	if (Serial.read() != CRC % 256) { // if message is wrong return false.
+	if (Serial.read() != CRC % 256 || Serial.read() != (unsigned int)CRC / 256) { // if message is wrong return false.
 		delete[] message;
 		return false;
 	}
-	if (Serial.read() != (unsigned int)CRC / 256) { // if message is wrong return false.
-		delete[] message;
-		return false;
-	}
+	delete[] message;
 	return true;
 }
 bool ControlIOMODBUSPoll::WriteSingleRegister(unsigned int slaveID, unsigned int reg, unsigned int value) {
@@ -122,7 +119,7 @@ int* ControlIOMODBUSPoll::ReadHoldingRegisters(int slaveID, int initialRegister,
 
 	// Checks for the message 14 times.
 	for (int i = 0; i < 14; i++) {
-		if (Serial.available() >= 5 + amount * 2) break;
+		if (Serial.available() >= 5+amount*2) break;
 		delay(5);
 	}
 	if (Serial.available() < 5 + amount * 2) return new int[0]; // if nothing returns a new int with 1 element.
@@ -223,7 +220,7 @@ bool* ControlIOMODBUSPoll::ReadCoils(int slaveID, int initialCoil, unsigned int 
 
 	// Checks for the message 14 times.
 	for (int i = 0; i < 14; i++) {
-		if (Serial.available() >= 5 + ceil(amount / (double)8)) break;
+		if (Serial.available() >= 5+ceil(amount/(double)8)) break;
 		delay(5);
 	}
 	if (Serial.available() < 5 + ceil(amount / (double)8)) return new bool[0]; // if nothing returns a new bool with 1 element.
@@ -243,13 +240,13 @@ bool* ControlIOMODBUSPoll::ReadCoils(int slaveID, int initialCoil, unsigned int 
 		int b = 0;
 		for (b = 0; b < floor(amount / (double)8); b++) {
 			for (int i = 0; i < 8; i++) {
-				result[i + (b * 8)] = message[b + 3] % 2;
-				message[b + 3] /= 2;
+				result[i + (b * 8)] = message[b+3] % 2;
+				message[b+3] /= 2;
 			}
 		}
 		for (int i = 0; i < amount % 8; i++) {
-			result[i + (b * 8)] = message[b + 3] % 2;
-			message[b + 3] /= 2;
+			result[i + (b * 8)] = message[b+3] % 2;
+			message[b+3] /= 2;
 		}
 		delete[] message;
 		return result;
@@ -259,7 +256,7 @@ bool* ControlIOMODBUSPoll::ReadCoils(int slaveID, int initialCoil, unsigned int 
 		delete[] message;
 		return new bool[0];
 	}
-
+	
 }
 bool* ControlIOMODBUSPoll::ReadInputStatus(int slaveID, int initialCoil, unsigned int amount) {
 	// Creates the message to send to slave.
