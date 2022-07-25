@@ -140,7 +140,7 @@ int* ControlIOMODBUSPoll::ReadHoldingRegisters(int slaveID, int initialRegister,
 		delete[] resultRegisters;
 		resultRegisters = new int[amount];
 		for (int i = 0; i < amount * 2; i += 2) {
-			resultRegisters[i] = message[3 + i] * 256 + message[4 + i];
+			resultRegisters[i/2] = message[3 + i] * 256 + message[4 + i];
 		}
 		delete[] message;
 		return resultRegisters;
@@ -190,7 +190,7 @@ int* ControlIOMODBUSPoll::ReadInputRegisters(int slaveID, int initialRegister, u
 		delete[] resultRegisters;
 		resultRegisters = new int[amount];
 		for (int i = 0; i < amount * 2; i += 2) {
-			resultRegisters[i] = message[3 + i] * 256 + message[4 + i];
+			resultRegisters[i/2] = message[3 + i] * 256 + message[4 + i];
 		}
 		delete[] message;
 		return resultRegisters;
