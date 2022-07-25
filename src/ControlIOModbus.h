@@ -96,15 +96,19 @@ public:
 	/// </summary>
 	/// <param name="slaveID">the slave id</param>
 	ControlIOMODBUSSlave(unsigned int slaveID, int coilAmount, int inputStatusAmount, int holdingRegistersAmount, int inputRegistersAmount) {
-		ControlIOMODBUSSlave::_SlaveID = slaveID;
+		// Sets the variables of the object.
+		_SlaveID = slaveID;
 		this->coilAmount = coilAmount;
 		this->inputStatusAmount = inputStatusAmount;
 		this->holdingRegistersAmount = holdingRegistersAmount;
 		this->inputRegistersAmount = inputRegistersAmount;
+		
+		// Deletes the pointers to those variables so it dont become a unusable memory pointer.
 		delete[] coils;
 		delete[] inputStatus;
 		delete[] holdingRegisters;
 		delete[] inputRegisters;
+		
 		// Creates the registers/coils
 		coils = new bool* [coilAmount];
 		for (int i = 0; i < coilAmount; i++) {
