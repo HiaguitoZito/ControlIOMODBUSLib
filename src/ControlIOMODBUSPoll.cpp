@@ -1,5 +1,7 @@
 #include "ControlIOModbus.h"
 
+bool* ControlIOMODBUSPoll::result = new bool[1];
+
 bool ControlIOMODBUSPoll::WriteSingleCoil(int slaveID, int coil, bool value) {
 	// Creates the message to send to slave.
 	short* message = new short[6];
@@ -134,12 +136,13 @@ int* ControlIOMODBUSPoll::ReadHoldingRegisters(int slaveID, int initialRegister,
 	unsigned int crc1 = Serial.read();
 	crc1 += Serial.read() * 256;
 	if (crc1 == CRC) { // Checks for the crc if right read the Registers elsewise will return new int with 1 element.
-		int* result = new int[amount];
+		delete[] resultRegisters;
+		resultRegisters = new int[amount];
 		for (int i = 0; i < amount * 2; i += 2) {
-			result[i] = message[3 + i] * 256 + message[4 + i];
+			resultRegisters[i] = message[3 + i] * 256 + message[4 + i];
 		}
 		delete[] message;
-		return result;
+		return resultRegisters;
 	} else {
 		return new int[0];
 	}
@@ -173,7 +176,7 @@ int* ControlIOMODBUSPoll::ReadInputRegisters(int slaveID, int initialRegister, u
 	}
 	if (Serial.available() < 5 + amount * 2) return new int[0]; // if nothing returns a new int with 1 element.
 
-	// Read the registers.
+	// Reads the registers.
 	message = new short[5 + amount * 2];
 	CRC = 0XFFFF;
 	for (int i = 0; i < 3 + amount * 2; i++) {
@@ -183,12 +186,13 @@ int* ControlIOMODBUSPoll::ReadInputRegisters(int slaveID, int initialRegister, u
 	unsigned int crc1 = Serial.read();
 	crc1 += Serial.read() * 256;
 	if (crc1 == CRC) { // Checks for the crc if right read the Registers elsewise will return new int with 1 element.
-		int* result = new int[amount];
+		delete[] resultRegisters;
+		resultRegisters = new int[amount];
 		for (int i = 0; i < amount * 2; i += 2) {
-			result[i] = message[3 + i] * 256 + message[4 + i];
+			resultRegisters[i] = message[3 + i] * 256 + message[4 + i];
 		}
 		delete[] message;
-		return result;
+		return resultRegisters;
 	} else {
 		return new int[0];
 	}
@@ -223,7 +227,7 @@ bool* ControlIOMODBUSPoll::ReadCoils(int slaveID, int initialCoil, unsigned int 
 		if (Serial.available() >= 5+ceil(amount/(double)8)) break;
 		delay(5);
 	}
-	if (Serial.available() < 5 + ceil(amount / (double)8)) return new bool[0]; // if nothing returns a new bool with 1 element.
+	if (Serial.available() < 5 + ceil(amount / (double)8)) return new bool[0]; // if nothing, returns a new bool with 1 element.
 
 	// Read the coils.
 	message = new short[5 + (int)ceil(amount / (double)8) - 2];
@@ -236,7 +240,8 @@ bool* ControlIOMODBUSPoll::ReadCoils(int slaveID, int initialCoil, unsigned int 
 	crc1 += Serial.read() * 256;
 
 	if (crc1 == CRC) { // Checks for the crc if right read the coils elsewise will return new bool with 1 element.
-		bool* result = new bool[amount];
+		delete[] result;
+		result = new bool[amount];
 		int b = 0;
 		for (b = 0; b < floor(amount / (double)8); b++) {
 			for (int i = 0; i < 8; i++) {
@@ -287,7 +292,7 @@ bool* ControlIOMODBUSPoll::ReadInputStatus(int slaveID, int initialCoil, unsigne
 		if (Serial.available() >= 5 + ceil(amount / (double)8)) break;
 		delay(5);
 	}
-	if (Serial.available() < 5 + ceil(amount / (double)8)) return new bool[0]; // if nothing returns a new bool with 1 element.
+	if (Serial.available() < 5 + ceil(amount / (double)8)) return new bool[0]; // if nothing, returns a new bool with 1 element.
 
 	// Read the coils.
 	message = new short[5 + (int)ceil(amount / (double)8) - 2];
@@ -300,7 +305,8 @@ bool* ControlIOMODBUSPoll::ReadInputStatus(int slaveID, int initialCoil, unsigne
 	crc1 += Serial.read() * 256;
 
 	if (crc1 == CRC) { // Checks for the crc if right read the coils elsewise will return new bool with 1 element.
-		bool* result = new bool[amount];
+		delete[] result;
+		result = new bool[amount];
 		int b = 0;
 		for (b = 0; b < floor(amount / (double)8); b++) {
 			for (int i = 0; i < 8; i++) {
@@ -320,7 +326,6 @@ bool* ControlIOMODBUSPoll::ReadInputStatus(int slaveID, int initialCoil, unsigne
 		delete[] message;
 		return new bool[0];
 	}
-
 }
 
 int ControlIOMODBUSPoll::DoCRC(int piece, unsigned short value) {
