@@ -1,6 +1,7 @@
 #include "ControlIOModbus.h"
 
 bool* ControlIOMODBUSPoll::result = new bool[1];
+int* ControlIOMODBUSPoll::resultRegisters = new int[1];
 
 bool ControlIOMODBUSPoll::WriteSingleCoil(int slaveID, int coil, bool value) {
 	// Creates the message to send to slave.
