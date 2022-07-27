@@ -4,6 +4,7 @@ void serialEvent() {
 	ControlIOMODBUSSlave::ReadMessage();
 }
 
+
 // Variables Declaration.
 unsigned int ControlIOMODBUSSlave::_SlaveID = 1;
 
@@ -66,7 +67,7 @@ void ControlIOMODBUSSlave::ReadMessage() {
 		// Read the message and calculates the crc.
 		int x = Serial.available();
 		unsigned int CRC2Compare = 0xFFFF;
-		unsigned short* message = new unsigned short[6];
+		unsigned int* message = new unsigned int[6];
 		delay(1);
 		for (int i = 0; i < x - 2; i++) {
 			unsigned int s = Serial.read(); // Reads serial buffer and stores the byte in an integer named "s".
@@ -84,11 +85,11 @@ void ControlIOMODBUSSlave::ReadMessage() {
 				// Return the coils (Function 0x01).
 				if (message[1] == 0x01) {
 					// Will read how many coils the master wants.
-					short initialCoil = message[2] * 256 + message[3];
-					short coilAmount = message[4] * 256 + message[5];
+					int initialCoil = message[2] * 256 + message[3];
+					int coilAmount = message[4] * 256 + message[5];
 					delete[] message;
 					// creates the message.
-					message = new unsigned short[(int)ceil(coilAmount / (double)8)];
+					message = new unsigned int[(int)ceil(coilAmount / (double)8)];
 					message[0] = _SlaveID; // Slave ID.
 					message[1] = 0x01; // Function.
 					message[2] = (int)ceil(coilAmount / (double)8); // Amount of Coils in Bytes.
@@ -98,7 +99,7 @@ void ControlIOMODBUSSlave::ReadMessage() {
 					for (b = 0; b < floor(coilAmount / (double)8); b++) {
 						unsigned int messageCoil = 0x00;
 						for (int i = 0; i < 8; i++) {
-							messageCoil += *coils[i + (b * 8)] ? Pow(2, i) : 0; // Turn the coils into Hex value.
+							messageCoil += *coils[i + (b * 8) + initialCoil] * Pow(2, i); // Turn the coils into Hex value.
 						}
 						message[3 + b] = messageCoil;
 					}
@@ -106,7 +107,7 @@ void ControlIOMODBUSSlave::ReadMessage() {
 					// Add the remaining coils.
 					int messageCoil = 0x00;
 					for (int i = 0; i < coilAmount % 8; i++) {
-						messageCoil += *coils[i + (b * 8)] * Pow(2, i); // Turn the coils into binary value.
+						messageCoil += *coils[i + (b * 8) + initialCoil] * Pow(2, i); // Turn the coils into binary value.
 					}
 					message[3 + b] = messageCoil;
 
@@ -115,7 +116,7 @@ void ControlIOMODBUSSlave::ReadMessage() {
 					for (int i = 0; i < 3 + (int)ceil(coilAmount / (double)8); i++) {
 						CRC = DoCRC(message[i], CRC);
 						Serial.write(message[i]);
-						delay(2);
+						delay(3);
 					}
 
 					// Will send the CRC with the message.
@@ -130,11 +131,11 @@ void ControlIOMODBUSSlave::ReadMessage() {
 				// Read discrete input status (Function 0x02).
 				if (message[1] == 0x02) {
 					// Will read how many input Status the master wants.
-					short initialRegister = message[2] * 256 + message[3];
+					short initialCoil = message[2] * 256 + message[3];
 					short amount = message[4] * 256 + message[5];
 					delete[] message;
 					// Creates the message.
-					message = new unsigned short[3 + (int)ceil(amount / (double)8)];
+					message = new unsigned int[3 + (int)ceil(amount / (double)8)];
 					message[0] = _SlaveID; // Slave ID.
 					message[1] = 0x02; // Function.
 					message[2] = ceil(amount / (double)8); // Amount of Registers in Bytes.
@@ -144,7 +145,7 @@ void ControlIOMODBUSSlave::ReadMessage() {
 					for (b = 0; b < floor(amount / (double)8); b++) {
 						unsigned int messageCoil = 0x00;
 						for (int i = 0; i < 8; i++) {
-							messageCoil += *inputStatus[i + (b * 8)] * Pow(2, i); // Turn the coils into binary value.
+							messageCoil += *inputStatus[i + (b * 8) + initialCoil] * Pow(2, i); // Turn the coils into binary value.
 						}
 						message[3 + b] = messageCoil;
 					}
@@ -152,7 +153,7 @@ void ControlIOMODBUSSlave::ReadMessage() {
 					// Add the remaining coils.
 					int messageCoil = 0x00;
 					for (int i = 0; i < amount % 8; i++) {
-						messageCoil += *inputStatus[i + (b * 8)] * Pow(2, i); // Turn the coils into binary value.
+						messageCoil += *inputStatus[i + (b * 8) + initialCoil] * Pow(2, i); // Turn the coils into binary value.
 					}
 					message[3 + b] = messageCoil;
 
@@ -179,20 +180,8 @@ void ControlIOMODBUSSlave::ReadMessage() {
 					unsigned short initialRegister = message[2] * 256 + message[3];
 					unsigned short amount = message[4] * 256 + message[5];
 					delete[] message;
-					if (amount - initialRegister > holdingRegistersAmount) {
-						Serial.write(0x01);
-						delay(2);
-						Serial.write(0x83);
-						delay(2);
-						Serial.write(0x02);
-						delay(2);
-						Serial.write(0xC0);
-						delay(2);
-						Serial.write(0xF1);
-						return;
-					}
 					// Creates the message.
-					message = new unsigned short[3 + amount * 2];
+					message = new unsigned int[3 + amount * 2];
 					message[0] = ControlIOMODBUSSlave::_SlaveID; // Slave ID.
 					message[1] = 0x03; // Function.
 					message[2] = amount * 2; // Amount of registers.
@@ -224,7 +213,7 @@ void ControlIOMODBUSSlave::ReadMessage() {
 					short amount = message[4] * 256 + message[5];
 					delete[] message;
 					// Creates the message.
-					message = new unsigned short[3 + amount * 2];
+					message = new unsigned int[3 + amount * 2];
 					message[0] = _SlaveID; // Slave ID.
 					message[1] = 0x04; // Function.
 					message[2] = amount * 2; // Amount of registers.
