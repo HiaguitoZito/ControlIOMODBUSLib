@@ -8,8 +8,8 @@ bool ControlIOMODBUSPoll::WriteSingleCoil(int slaveID, int coil, bool value) {
 	short* message = new short[6];
 	message[0] = slaveID; // The slave id.
 	message[1] = 0x05; // Write coil function code (0x05).
-	message[2] = coil / 256; // Most significant 2 bytes of the coils to write.
-	message[3] = coil % 256; // Less significant 2 bytes of the coils to write.
+	message[2] = coil / 256; // Most significant byte of the coils to write.
+	message[3] = coil % 256; // Less significant byte of the coils to write.
 	message[4] = value ? 0xFF : 0x00; // if value = true then message[4] = 0xFF then elsewise message[4] = 0x00.
 	message[5] = 0x00;
 
